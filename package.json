@@ -1,0 +1,25 @@
+{
+  "name": "publish",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Daniel Velasquez",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "mdast-util-wiki-link": "^0.1.2",
+    "micromark-extension-wiki-link": "^0.0.4",
+    "remark": "^15.0.1",
+    "remark-frontmatter": "^5.0.0",
+    "remark-gfm": "^4.0.0",
+    "yaml": "^2.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.5",
+    "typescript": "^5.4.4"
+  }
+}
