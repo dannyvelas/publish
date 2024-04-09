@@ -79,8 +79,6 @@ async function transformMarkdown(
       hrefTemplate: (permalink: string) => `/posts/${permalink}/`,
       permalinks,
     });
-  // TODO: make this plugin more generic to allow for different sorts of changes to frontmatter
-  //.use(removePublicFromFrontmatter);
 
   const file = await processor.process(md);
   return file.toString();
