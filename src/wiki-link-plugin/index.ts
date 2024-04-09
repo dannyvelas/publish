@@ -46,7 +46,6 @@ function toMarkdown(): Options {
     // TODO: change this to be "safe"
     const nodeAlias = node.data.alias;
 
-    // TODO: do something in case `node.data.alias` DNE
     // if `node.data.hProperties.href` exits, convert wiki link to a markdown link
     // otherwise convert wiki link to plain text
     const value =
