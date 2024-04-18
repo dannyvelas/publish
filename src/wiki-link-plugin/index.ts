@@ -12,7 +12,7 @@ import { fromMarkdown } from "mdast-util-wiki-link";
 import { Processor } from "unified";
 
 // A lot of inspiration for this plugin came from https://github.com/landakram/remark-wiki-link
-export function wikiLinkPlugin(this: Processor, opts = {}) {
+export default function wikiLinkPlugin(this: Processor, opts = {}) {
   const data = this.data();
 
   data.toMarkdownExtensions = append(data.toMarkdownExtensions, toMarkdown());

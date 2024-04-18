@@ -6,10 +6,11 @@ import remarkGfm from "remark-gfm";
 import matter from "gray-matter";
 import fsp from "fs/promises";
 import { Dirent } from "fs";
-import { wikiLinkPlugin } from "./wiki-link-plugin/index.js";
 import { File } from "./types.js";
 import path from "path";
 import readline from "readline/promises";
+import wikiLinkPlugin from "./wiki-link-plugin/index.js";
+import astroFrontmatterPlugin from "./astro-frontmatter-plugin/index.js";
 
 const inDir = `/Users/dannyvelasquez/RemoteGit/MyGithub/notes/`;
 const outDir = `/Users/dannyvelasquez/RemoteGit/MyGithub/My-Websites/my-second-website/src/pages/posts/`;
@@ -77,6 +78,7 @@ async function transformMarkdown(
     .use(remarkStringify, { bullet: "-" })
     .use(remarkFrontmatter) // this plugin makes remark recognize that a yaml section at the top is frontmatter and not a thematic break with markdown inside of it
     .use(remarkGfm) // this plugin makes remark recognize tables, footnotes, and other cool gfm-specific things as their own entities, instead of paragraphs
+    .use(astroFrontmatterPlugin)
     .use(wikiLinkPlugin, {
       aliasDivider: "|",
       hrefTemplate: (permalink: string) => `/posts/${permalink}/`,
