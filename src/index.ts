@@ -11,11 +11,16 @@ import path from "path";
 import readline from "readline/promises";
 import wikiLinkPlugin from "./wiki-link-plugin/index.js";
 import astroFrontmatterPlugin from "./astro-frontmatter-plugin/index.js";
+import obsidianTagsPlugin from "./obsidian-tags-plugin/index.js";
+import "dotenv/config";
 
 const inDir = `/Users/dannyvelasquez/RemoteGit/MyGithub/notes/`;
 const outDir = `/Users/dannyvelasquez/RemoteGit/MyGithub/My-Websites/my-second-website/src/pages/posts/`;
 
 async function main() {
+  // get list of tags to filter out
+  const tagBlacklist = arrayFromEnv("TAG_BLACKLIST");
+
   // find all markdown files recursively in current directory
   const filePaths = await fsp.readdir(inDir, {
     recursive: true,
@@ -35,7 +40,7 @@ async function main() {
 
   // create array of new markdown files
   const newPosts = await Promise.all(
-    publicMdFiles.map((x) => blogify(x, permalinks))
+    publicMdFiles.map((x) => blogify(x, permalinks, tagBlacklist))
   );
 
   deleteOldPostsIfNecessary(newPosts);
@@ -45,6 +50,13 @@ async function main() {
     const p = path.join(outDir, post.base);
     await fsp.writeFile(p, post.content, { flag: "w" });
   }
+}
+
+function arrayFromEnv(key: string): string[] {
+  const stringValue = process.env[key];
+  if (!stringValue) return [];
+
+  return stringValue.split(",").filter((x) => x !== "");
 }
 
 async function newFile(dirent: Dirent): Promise<File | undefined> {
@@ -61,17 +73,22 @@ async function newFile(dirent: Dirent): Promise<File | undefined> {
 
 // blogify takes a file and returns the same exact file, except content will be the
 // transformed markdown
-async function blogify(file: File, permalinks: string[]): Promise<File> {
+async function blogify(
+  file: File,
+  permalinks: string[],
+  tagBlacklist: string[]
+): Promise<File> {
   return {
     ...file,
-    content: await transformMarkdown(file.content, permalinks),
+    content: await transformMarkdown(file.content, permalinks, tagBlacklist),
   };
 }
 
 // transform new md to have links to website posts instead of wikilinks.
 async function transformMarkdown(
   md: string,
-  permalinks: string[]
+  permalinks: string[],
+  tagBlacklist: string[]
 ): Promise<string> {
   const processor = unified()
     .use(remarkParse)
@@ -83,7 +100,8 @@ async function transformMarkdown(
       aliasDivider: "|",
       hrefTemplate: (permalink: string) => `/posts/${permalink}/`,
       permalinks,
-    });
+    })
+    .use(obsidianTagsPlugin, { tagBlacklist });
 
   const file = await processor.process(md);
   return file.toString();

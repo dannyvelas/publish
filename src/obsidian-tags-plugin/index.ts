@@ -1,7 +1,14 @@
+import { Processor } from "unified";
 import { Root, Paragraph, Yaml } from "mdast";
 import { parseDocument } from "yaml";
 
-export default function () {
+type Options = {
+  tagBlacklist?: string[];
+};
+
+export default function (this: Processor, opts: Options) {
+  const tagBlacklistSet = new Set(opts.tagBlacklist);
+
   return function (root: Root) {
     // find ymlNode
     const ymlNode = root.children.find(
@@ -15,7 +22,7 @@ export default function () {
     const frontmatter = parseDocument(ymlNode.value);
 
     // find paragraph that starts with `tags:` (case-insensitive)
-    const tagsParagraphNode = root.children.find((node): node is Paragraph => {
+    const tagsParagraphIndex = root.children.findIndex((node) => {
       if (node.type !== "paragraph" || node.children.length === 0) {
         return false;
       }
@@ -25,11 +32,12 @@ export default function () {
       }
       return firstChild.value.toLowerCase().startsWith("tags:");
     });
-    if (!tagsParagraphNode) {
+    if (tagsParagraphIndex === -1) {
       return;
     }
 
     // get all of the wiki link nodes from that paragraph
+    const tagsParagraphNode = root.children[tagsParagraphIndex] as Paragraph;
     const wikiLinkNodes = tagsParagraphNode.children.filter(
       // @ts-ignore: hack: the `Paragraph` type doesn't recognize that it can have `wikiLink` node children
       (node) => node.type === "wikiLink"
@@ -38,10 +46,16 @@ export default function () {
     // extract text from these wiki link nodes
     const textTags = wikiLinkNodes.map((node): string => (node as any).value);
 
+    // remove tags that are in blacklist
+    const publicTags = textTags.filter((x) => !tagBlacklistSet.has(x));
+
     // save new property to yml node with those text tags
-    frontmatter.set("tags", textTags);
+    frontmatter.set("tags", publicTags);
 
     // update yaml node
     ymlNode.value = frontmatter.toString();
+
+    // remove tagsParagraphNode from root.children. its not needed anymore
+    root.children.splice(tagsParagraphIndex, 1);
   };
 }
