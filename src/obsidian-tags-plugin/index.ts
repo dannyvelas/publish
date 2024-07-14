@@ -1,14 +1,7 @@
-import { Processor } from "unified";
 import { Root, Paragraph, Yaml } from "mdast";
 import { parseDocument } from "yaml";
 
-type Options = {
-  tagBlacklist?: string[];
-};
-
-export default function (this: Processor, opts: Options) {
-  const tagBlacklistSet = new Set(opts.tagBlacklist);
-
+export default function () {
   return function (root: Root) {
     // find ymlNode
     const ymlNode = root.children.find(
@@ -22,7 +15,7 @@ export default function (this: Processor, opts: Options) {
     const frontmatter = parseDocument(ymlNode.value);
 
     // find paragraph that starts with `tags:` (case-insensitive)
-    const tagsParagraphIndex = root.children.findIndex((node) => {
+    const tagsParagraphNode = root.children.find((node): node is Paragraph => {
       if (node.type !== "paragraph" || node.children.length === 0) {
         return false;
       }
@@ -32,12 +25,11 @@ export default function (this: Processor, opts: Options) {
       }
       return firstChild.value.toLowerCase().startsWith("tags:");
     });
-    if (tagsParagraphIndex === -1) {
+    if (!tagsParagraphNode) {
       return;
     }
 
     // get all of the wiki link nodes from that paragraph
-    const tagsParagraphNode = root.children[tagsParagraphIndex] as Paragraph;
     const wikiLinkNodes = tagsParagraphNode.children.filter(
       // @ts-ignore: hack: the `Paragraph` type doesn't recognize that it can have `wikiLink` node children
       (node) => node.type === "wikiLink"
@@ -46,16 +38,10 @@ export default function (this: Processor, opts: Options) {
     // extract text from these wiki link nodes
     const textTags = wikiLinkNodes.map((node): string => (node as any).value);
 
-    // remove tags that are in blacklist
-    const publicTags = textTags.filter((x) => !tagBlacklistSet.has(x));
-
     // save new property to yml node with those text tags
-    frontmatter.set("tags", publicTags);
+    frontmatter.set("tags", textTags);
 
     // update yaml node
     ymlNode.value = frontmatter.toString();
-
-    // remove tagsParagraphNode from root.children. its not needed anymore
-    root.children.splice(tagsParagraphIndex, 1);
   };
 }
