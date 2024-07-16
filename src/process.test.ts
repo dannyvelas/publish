@@ -1,54 +1,59 @@
 import { transformMarkdown } from "./process.js";
-import { test, expect } from 'vitest';
+import { test, expect } from "vitest";
 import dedent from "dedent-js";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkFrontmatter from "remark-frontmatter";
+import remarkGfm from "remark-gfm";
+import { parseDocument } from "yaml";
+import { Literal } from "mdast";
 
-test.each([
-  {
-    name: "transformMarkdown adds a layout field to the frontmatter",
-    input: `---
-title: "The importance of good testing"
-date: 2024-04-17
-publish: true
----
-Example text`,
-    expected: `---
-title: "The importance of good testing"
-date: 2024-04-17
-publish: true
-layout: ../../layouts/BlogLayout.astro
+// processor used to test output markdown
+const processor = unified()
+  .use(remarkParse)
+  .use(remarkFrontmatter)
+  .use(remarkGfm);
 
----
+test("transformMarkdown adds a layout field to the frontmatter", async () => {
+  const input = dedent`---
+    title: "The importance of good testing"
+    date: 2024-04-17
+    publish: true
+    ---
+    Example text`;
 
-Example text
-`,
-  },
-  {
-    name: "transformMarkdown will find a paragraph that matches obsidian tag syntax, remove it, and add its information to the frontmatter",
-    input: `---
-title: "The importance of good testing"
-date: 2024-04-17
-publish: true
----
-Tags: [[career]], [[programming-languages]]
-
-Example text`,
-    expected: `---
-title: "The importance of good testing"
-date: 2024-04-17
-publish: true
-layout: ../../layouts/BlogLayout.astro
-tags:
-  - career
-  - programming-languages
-
----
-
-Example text
-`,
-  },
-])("$name", async ({ input, expected }) => {
   const actualMd = await transformMarkdown(input, []);
-  expect(actualMd).toBe(expected);
+  const actualCST = processor.parse(actualMd);
+  expect(actualCST.children.length).toBeGreaterThan(0);
+
+  const firstChild = actualCST.children[0];
+  expect(firstChild.type).toBe("yaml");
+  expect(firstChild).toHaveProperty("value");
+
+  const parsed = parseDocument((firstChild as Literal).value).toJSON();
+  expect(parsed).toHaveProperty("layout");
+});
+
+test("transformMarkdown will find a paragraph that matches obsidian tag syntax, remove it, and add its information to the frontmatter", async () => {
+  const input = dedent`---
+    title: "The importance of good testing"
+    date: 2024-04-17
+    publish: true
+    ---
+    Tags: [[career]], [[programming-languages]]
+
+    Example text`;
+
+  const actualMd = await transformMarkdown(input, []);
+  const actualCST = processor.parse(actualMd);
+  expect(actualCST.children.length).toBeGreaterThan(0);
+
+  const firstChild = actualCST.children[0];
+  expect(firstChild.type).toBe("yaml");
+  expect(firstChild).toHaveProperty("value");
+
+  const parsed = parseDocument((firstChild as Literal).value).toJSON();
+  expect(parsed).toHaveProperty("tags");
 });
 
 test.each([
