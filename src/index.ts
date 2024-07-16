@@ -1,7 +1,11 @@
 import fsp from "fs/promises";
 import path from "path";
-import { deleteOldPostsIfNecessary, transformMarkdown, newFile } from './process.js'
-import type { File } from './process.js';
+import {
+  deleteOldPostsIfNecessary,
+  transformMarkdown,
+  newFile,
+} from "./process.js";
+import type { File } from "./process.js";
 
 const inDir = `/Users/dannyvelasquez/RemoteGit/MyGithub/notes/`;
 const outDir = `/Users/dannyvelasquez/RemoteGit/MyGithub/My-Websites/my-second-website/src/pages/posts/`;
@@ -16,7 +20,7 @@ async function main() {
 
   // convert markdown files to `File` objects
   const mdFiles = await Promise.all(mdFilePaths.map(newFile));
-  console.log(JSON.stringify(mdFiles))
+  console.log(JSON.stringify(mdFiles));
   const mdFilesOk = mdFiles.filter((x): x is File => x !== undefined);
 
   // if the markdown file is not public, ignore
@@ -27,7 +31,10 @@ async function main() {
 
   // create array of new markdown files
   const newPosts = await Promise.all(
-    publicMdFiles.map(async (x) => ({ ...x, content: await transformMarkdown(x.content, permalinks) }))
+    publicMdFiles.map(async (x) => ({
+      ...x,
+      content: await transformMarkdown(x.content, permalinks),
+    })),
   );
 
   deleteOldPostsIfNecessary(newPosts, outDir);

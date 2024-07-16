@@ -64,7 +64,7 @@ export async function deleteOldPostsIfNecessary(
   rl.close();
 }
 
-// transform new md to have links to website posts instead of wikilinks.
+// runs markdown transformations and returns the transformed markdown
 export async function transformMarkdown(
   md: string,
   permalinks: string[],
@@ -99,6 +99,7 @@ export async function transformMarkdown(
     // obsidian, remove it, and add its information to the frontmatter
     .use(obsidianTagsPlugin);
 
-  const file = await processor.process(md);
-  return file.toString();
+  const transformedVFile = await processor.process(md);
+
+  return transformedVFile.toString();
 }
