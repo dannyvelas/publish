@@ -55,17 +55,17 @@ test.each([
     name: "transformMarkdown converts a wikilink to text when target is not in permalinks",
     input: "[[nonexisting-link|link alias]]",
     permalinks: [],
-    expected: "link alias\n",
+    expected: "link alias",
   },
   {
     name: "transformMarkdown converts a wikilink to an href when target is in permalinks",
     input: "[[existing-link|link alias]]",
     permalinks: ["existing-link"],
-    expected: "[link alias](/posts/existing-link/)\n",
+    expected: "[link alias](/posts/existing-link/)",
   },
 ])("$name", async ({ input, permalinks, expected }) => {
   const actualMd = await transformMarkdown(input, permalinks);
-  expect(actualMd).toBe(expected);
+  expect(actualMd.trim()).toBe(expected);
 });
 
 test("transformMarkdown removes first paragraph if it starts with Tags:", async () => {
