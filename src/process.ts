@@ -11,7 +11,6 @@ import wikiLinkPlugin from "./wiki-link-plugin/index.js";
 import astroFrontmatterPlugin from "./astro-frontmatter-plugin/index.js";
 import obsidianTagsPlugin from "./obsidian-tags-plugin/index.js";
 import { Dirent } from "fs";
-import { Root } from "mdast";
 import path from "path";
 import fsp from "fs/promises";
 
@@ -65,42 +64,42 @@ export async function deleteOldPostsIfNecessary(
   rl.close();
 }
 
-const processor = unified()
-  // this plugin configures unified to read markdown
-  .use(remarkParse)
-
-  // this plugin configures unified to output markdown
-  .use(remarkStringify, { bullet: "-" })
-
-  // this plugin makes remark recognize that a yaml section at the top is frontmatter and
-  // not a thematic break with markdown inside of it
-  .use(remarkFrontmatter)
-
-  // this plugin makes remark recognize tables, footnotes, and other cool gfm-specific things as
-  // their own entities, instead of paragraphs
-  .use(remarkGfm)
-
-  // this plugin adds astro-specific settings to front-matter
-  .use(astroFrontmatterPlugin)
-
-  // this plugin converts wiki links to normal markdown links if their target is found inside of
-  // `permalinks`. otherwise, they are converted to text
-  .use(wikiLinkPlugin, {
-    aliasDivider: "|",
-    hrefTemplate: (permalink: string) => `/posts/${permalink}/`,
-    permalinks,
-  })
-
-  // this plugin will search for a paragraph that matches tag syntax in
-  // obsidian, remove it, and add its information to the frontmatter
-  .use(obsidianTagsPlugin);
-
 // runs markdown transformations and returns the transformed markdown
 export async function transformMarkdown(
   md: string,
   permalinks: string[],
 ): Promise<string> {
-  const cst = processor.parse(md);
-  const newCST = await processor.run(cst)) as Root;
-  return processor.stringify(newCST);
+  const processor = unified()
+    // this plugin configures unified to read markdown
+    .use(remarkParse)
+
+    // this plugin configures unified to output markdown
+    .use(remarkStringify, { bullet: "-" })
+
+    // this plugin makes remark recognize that a yaml section at the top is frontmatter and
+    // not a thematic break with markdown inside of it
+    .use(remarkFrontmatter)
+
+    // this plugin makes remark recognize tables, footnotes, and other cool gfm-specific things as
+    // their own entities, instead of paragraphs
+    .use(remarkGfm)
+
+    // this plugin adds astro-specific settings to front-matter
+    .use(astroFrontmatterPlugin)
+
+    // this plugin converts wiki links to normal markdown links if their target is found inside of
+    // `permalinks`. otherwise, they are converted to text
+    .use(wikiLinkPlugin, {
+      aliasDivider: "|",
+      hrefTemplate: (permalink: string) => `/posts/${permalink}/`,
+      permalinks,
+    })
+
+    // this plugin will search for a paragraph that matches tag syntax in
+    // obsidian, remove it, and add its information to the frontmatter
+    .use(obsidianTagsPlugin);
+
+  const transformedVFile = await processor.process(md);
+
+  return transformedVFile.toString();
 }
