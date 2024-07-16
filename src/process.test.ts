@@ -14,14 +14,30 @@ const processor = unified()
   .use(remarkFrontmatter)
   .use(remarkGfm);
 
-test("transformMarkdown adds a layout field to the frontmatter", async () => {
-  const input = dedent`---
-    title: "The importance of good testing"
-    date: 2024-04-17
-    publish: true
-    ---
-    Example text`;
+test.each([
+  {
+    name: "transformMarkdown adds a layout field to the frontmatter",
+    input: dedent`---
+      title: "The importance of good testing"
+      date: 2024-04-17
+      publish: true
+      ---
+      Example text`,
+    expectedProperty: "layout",
+  },
+  {
+    name: "transformMarkdown will find a paragraph that matches obsidian tag syntax and add its information to the frontmatter",
+    input: dedent`---
+      title: "The importance of good testing"
+      date: 2024-04-17
+      publish: true
+      ---
+      Tags: [[career]], [[programming-languages]]
 
+      Example text`,
+    expectedProperty: "tags",
+  },
+])("$name", async ({ input, expectedProperty }) => {
   const actualMd = await transformMarkdown(input, []);
   const actualCST = processor.parse(actualMd);
   expect(actualCST.children.length).toBeGreaterThan(0);
@@ -31,29 +47,7 @@ test("transformMarkdown adds a layout field to the frontmatter", async () => {
   expect(firstChild).toHaveProperty("value");
 
   const parsed = parseDocument((firstChild as Literal).value).toJSON();
-  expect(parsed).toHaveProperty("layout");
-});
-
-test("transformMarkdown will find a paragraph that matches obsidian tag syntax, remove it, and add its information to the frontmatter", async () => {
-  const input = dedent`---
-    title: "The importance of good testing"
-    date: 2024-04-17
-    publish: true
-    ---
-    Tags: [[career]], [[programming-languages]]
-
-    Example text`;
-
-  const actualMd = await transformMarkdown(input, []);
-  const actualCST = processor.parse(actualMd);
-  expect(actualCST.children.length).toBeGreaterThan(0);
-
-  const firstChild = actualCST.children[0];
-  expect(firstChild.type).toBe("yaml");
-  expect(firstChild).toHaveProperty("value");
-
-  const parsed = parseDocument((firstChild as Literal).value).toJSON();
-  expect(parsed).toHaveProperty("tags");
+  expect(parsed).toHaveProperty(expectedProperty);
 });
 
 test.each([
