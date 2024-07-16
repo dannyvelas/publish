@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {
-    "test": "jest"
+    "test": "vitest run"
   },
   "author": "Daniel Velasquez",
   "license": "ISC",
@@ -21,9 +21,8 @@
     "yaml": "^2.4.1"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.12",
     "@types/node": "^20.12.5",
-    "ts-jest": "^29.2.2",
-    "typescript": "^5.4.4"
+    "typescript": "^5.4.4",
+    "vitest": "^2.0.3"
   }
 }
