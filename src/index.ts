@@ -20,7 +20,6 @@ async function main() {
 
   // convert markdown files to `File` objects
   const mdFiles = await Promise.all(mdFilePaths.map(newFile));
-  console.log(JSON.stringify(mdFiles));
   const mdFilesOk = mdFiles.filter((x): x is File => x !== undefined);
 
   // if the markdown file is not public, ignore
